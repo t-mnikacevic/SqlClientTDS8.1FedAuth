@@ -96,6 +96,7 @@ namespace Microsoft.Data.SqlClient
 
     internal sealed class SqlLogin
     {
+        //promenjeno
         internal SqlAuthenticationMethod authentication = SqlAuthenticationMethod.NotSpecified;  // Authentication type
         internal int timeout;                                                       // login timeout
         internal bool userInstance = false;                                   // user instance
@@ -109,6 +110,10 @@ namespace Microsoft.Data.SqlClient
         internal string attachDBFilename = "";                                      // DB filename to be attached
         internal bool useReplication = false;                                   // user login for replication
         internal string newPassword = "";                                   // new password for reset password
+        internal string instOpt="";
+        internal string ThreadID = "";
+        internal string MARS = "";
+        internal string TraceID = "";
         internal bool useSSPI = false;                                   // use integrated security
         internal int packetSize = SqlConnectionString.DEFAULT.Packet_Size; // packet size
         internal bool readOnlyIntent = false;                                   // read-only intent
@@ -121,6 +126,9 @@ namespace Microsoft.Data.SqlClient
         internal byte majorVersion;
         internal byte minorVersion;
         internal short buildNum;
+        internal byte marsFlag;
+        internal byte TraceIDFlag;
+        internal byte ThreadIDFlag;
         internal uint tdsVersion;
     }
 

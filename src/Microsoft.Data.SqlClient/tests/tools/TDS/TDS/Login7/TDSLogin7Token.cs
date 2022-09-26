@@ -42,6 +42,10 @@ namespace Microsoft.SqlServer.TDS.Login7
                 + sizeof(ushort) + sizeof(ushort)  // SSPI
                 + sizeof(ushort) + sizeof(ushort)  // AttachDatabaseFile
                 + sizeof(ushort) + sizeof(ushort)  // ChangePassword
+                + sizeof(ushort) + sizeof(ushort) // InstOption
+                + sizeof(ushort) + sizeof(ushort) // ThreadID
+                + sizeof(ushort) + sizeof(ushort) // MARS
+                + sizeof(ushort) + sizeof(ushort) // TraceID
                 + sizeof(uint);  // LongSSPI;
 
         /// <summary>
@@ -153,7 +157,30 @@ namespace Microsoft.SqlServer.TDS.Login7
         /// Change password
         /// </summary>
         public string ChangePassword { get; set; }
+        
+        
+        //OVDE menjam
+        /// <summary>
+        /// InstOption
+        /// </summary>
+        public string InstOpt { get; set; }
 
+
+        ///<summary>
+        /// ThreadID
+        /// </summary>
+        public string ThreadID { get; set; }
+
+        ///<summary>
+        /// MARS
+        /// </summary>
+        public string MARS { get; set; }
+
+        ///<summary>
+        /// TraceID
+        /// </summary>
+
+        public string TraceID { get; set; }
         /// <summary>
         /// SSPI authentication blob
         /// </summary>
@@ -428,6 +455,10 @@ namespace Microsoft.SqlServer.TDS.Login7
                 + (uint)(string.IsNullOrEmpty(Database) ? 0 : Database.Length * 2)  // Database
                 + (uint)(string.IsNullOrEmpty(AttachDatabaseFile) ? 0 : AttachDatabaseFile.Length * 2)  // AttachDatabaseFile
                 + (uint)(string.IsNullOrEmpty(ChangePassword) ? 0 : ChangePassword.Length * 2)  // ChangePassword
+                + (uint)(string.IsNullOrEmpty(InstOpt) ? 0 : InstOpt.Length * 2 )
+                + (uint)(string.IsNullOrEmpty(ThreadID) ? 0 : ThreadID.Length * 2)
+                + (uint)(string.IsNullOrEmpty(MARS) ? 0 : MARS.Length * 2)
+                + (uint)(string.IsNullOrEmpty(TraceID) ? 0 : TraceID.Length * 2)
                 + (uint)(SSPI == null ? 0 : SSPI.Length)  // SSPI
                 + 0);  // Feature extension
 

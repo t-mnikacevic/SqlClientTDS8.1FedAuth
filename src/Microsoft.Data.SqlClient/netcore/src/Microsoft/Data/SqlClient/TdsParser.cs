@@ -100,8 +100,19 @@ namespace Microsoft.Data.SqlClient
         // Connection reference
         private SqlInternalConnectionTds _connHandler;
 
+        // getter for guid1 
+
+        public Guid getGuid1()
+        {
+            return _connHandler._clientConnectionId;
+        }
+
+
         // Async/Mars variables
         private bool _fMARS = false;
+
+        //adding a getter for mars bool
+        public bool getMars() { return _fMARS; }
 
         internal bool _loginWithFailover = false; // set to true while connect in failover mode so parser state object can adjust its logic
 
@@ -501,15 +512,21 @@ namespace Microsoft.Data.SqlClient
             }
 
             SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.Connect|SEC> Sending prelogin handshake");
-            SendPreLoginHandshake(instanceName, encrypt, integratedSecurity);
+            //SendPreLoginHandshake(instanceName, encrypt, integratedSecurity);
 
+            if (encrypt == SqlConnectionEncryptOption.Strict)
+            {
+                uint info = TdsEnums.SNI_SSL_VALIDATE_CERTIFICATE | TdsEnums.SNI_SSL_USE_SCHANNEL_CACHE | TdsEnums.SNI_SSL_SEND_ALPN_EXTENSION;
+                EnableSsl(info, encrypt, integratedSecurity);
+            }
             _connHandler.TimeoutErrorInternal.EndPhase(SqlConnectionTimeoutErrorPhase.SendPreLoginHandshake);
             _connHandler.TimeoutErrorInternal.SetAndBeginPhase(SqlConnectionTimeoutErrorPhase.ConsumePreLoginHandshake);
 
             _physicalStateObj.SniContext = SniContext.Snix_PreLogin;
             SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.Connect|SEC> Consuming prelogin handshake");
-            PreLoginHandshakeStatus status = ConsumePreLoginHandshake(encrypt, trustServerCert, integratedSecurity, out marsCapable,
-                out _connHandler._fedAuthRequired, encrypt == SqlConnectionEncryptOption.Strict);
+            PreLoginHandshakeStatus status = PreLoginHandshakeStatus.Successful;
+                //ConsumePreLoginHandshake(encrypt, trustServerCert, integratedSecurity, out marsCapable,
+                //out _connHandler._fedAuthRequired, encrypt == SqlConnectionEncryptOption.Strict);
 
             if (status == PreLoginHandshakeStatus.InstanceFailure)
             {
@@ -540,10 +557,11 @@ namespace Microsoft.Data.SqlClient
                     _physicalStateObj.AssignPendingDNSInfo(serverInfo.UserProtocol, FQDNforDNSCache, ref _connHandler.pendingSQLDNSObject);
                 }
 
-                SendPreLoginHandshake(instanceName, encrypt, integratedSecurity);
-                status = ConsumePreLoginHandshake(encrypt, trustServerCert, integratedSecurity, out marsCapable, out _connHandler._fedAuthRequired,
-                    encrypt == SqlConnectionEncryptOption.Strict);
-
+                //SendPreLoginHandshake(instanceName, encrypt, integratedSecurity);
+                status = PreLoginHandshakeStatus.Successful;
+                //ConsumePreLoginHandshake(encrypt, trustServerCert, integratedSecurity, out marsCapable, out _connHandler._fedAuthRequired,
+                //   encrypt == SqlConnectionEncryptOption.Strict);
+                _connHandler._fedAuthRequired = false;
                 // Don't need to check for 7.0 failure, since we've already consumed
                 // one pre-login packet and know we are connecting to 2000.
                 if (status == PreLoginHandshakeStatus.InstanceFailure)
@@ -707,7 +725,7 @@ namespace Microsoft.Data.SqlClient
                 {
                     case (int)PreLoginOptions.VERSION:
                         Version systemDataVersion = ADP.GetAssemblyVersion();
-
+                        //OVDE SE SALJE PRELOGIN
                         // Major and minor
                         payload[payloadLength++] = (byte)(systemDataVersion.Major & 0xff);
                         payload[payloadLength++] = (byte)(systemDataVersion.Minor & 0xff);
@@ -3603,6 +3621,29 @@ namespace Microsoft.Data.SqlClient
                 return false;
             }
 
+            byte MARSFlag;
+            if (!stateObj.TryReadByte(out MARSFlag))
+            {
+                return false;
+            }
+            a.marsFlag = MARSFlag;
+
+            byte TraceID;
+            if (!stateObj.TryReadByte(out TraceID))
+            {
+                return false;
+            }
+            a.TraceIDFlag = TraceID;
+
+            byte ThreadID;
+            if (!stateObj.TryReadByte(out ThreadID))
+            {
+                return false;
+            }
+            a.ThreadIDFlag = ThreadID;
+
+
+
             Span<byte> b = stackalloc byte[TdsEnums.VERSION_SIZE];
             if (!stateObj.TryReadByteArray(b, b.Length))
             {
@@ -3661,7 +3702,6 @@ namespace Microsoft.Data.SqlClient
             {
                 return false;
             }
-
             if (!stateObj.TrySkipBytes(len * ADP.CharSize))
             {
                 return false;
@@ -8012,10 +8052,11 @@ namespace Microsoft.Data.SqlClient
             }
 
             // set the message type
-            _physicalStateObj._outputMessageType = TdsEnums.MT_LOGIN7;
+            _physicalStateObj._outputMessageType = TdsEnums.MT_NEW_LOGIN;
 
             // length in bytes
-            int length = TdsEnums.SQL2005_LOG_REC_FIXED_LEN;
+            //PROMENJENO NA 110
+            int length = 110;
 
             string clientInterfaceName = TdsEnums.SQL_PROVIDER_NAME;
             Debug.Assert(TdsEnums.MAXLEN_CLIENTINTERFACE >= clientInterfaceName.Length, "cchCltIntName can specify at most 128 unicode characters. See Tds spec");
@@ -8027,7 +8068,7 @@ namespace Microsoft.Data.SqlClient
                 length += (rec.hostName.Length + rec.applicationName.Length +
                             rec.serverName.Length + clientInterfaceName.Length +
                             rec.language.Length + rec.database.Length +
-                            rec.attachDBFilename.Length) * 2;
+                            rec.attachDBFilename.Length  + rec.instOpt.Length + rec.MARS.Length + rec.TraceID.Length + rec.ThreadID.Length) * 2;
                 if (useFeatureExt)
                 {
                     length += 4;
@@ -8211,8 +8252,9 @@ namespace Microsoft.Data.SqlClient
                 WriteInt(0, _physicalStateObj);  // ClientTimeZone is not used
                 WriteInt(0, _physicalStateObj);  // LCID is unused by server
 
-                // Start writing offset and length of variable length portions
-                int offset = TdsEnums.SQL2005_LOG_REC_FIXED_LEN;
+                // Start writing offset and length of variable length portions'
+                // promenjeno na 110
+                int offset = 110;
 
                 // write offset/length pairs
 
@@ -8294,8 +8336,34 @@ namespace Microsoft.Data.SqlClient
                 WriteShort(rec.attachDBFilename.Length, _physicalStateObj);
                 offset += rec.attachDBFilename.Length * 2;
 
+             
+
+
+
+
+
                 WriteShort(offset, _physicalStateObj); // reset password offset
                 WriteShort(encryptedChangePasswordLengthInBytes / 2, _physicalStateObj);
+                offset += encryptedChangePasswordLengthInBytes;
+
+
+
+                WriteShort(offset, _physicalStateObj);
+                WriteShort(rec.instOpt.Length, _physicalStateObj);
+                offset += rec.instOpt.Length * 2;
+
+                WriteShort(offset, _physicalStateObj);
+                WriteShort(rec.ThreadID.Length, _physicalStateObj);
+                offset += rec.ThreadID.Length * 2;
+
+                WriteShort(offset, _physicalStateObj);
+                WriteShort(rec.MARS.Length, _physicalStateObj);
+                offset += rec.MARS.Length * 2;
+
+                WriteShort(offset, _physicalStateObj);
+                WriteShort(rec.TraceID.Length, _physicalStateObj);
+                //offset += rec.TraceID.Length * 2;
+
 
                 WriteInt(0, _physicalStateObj);        // reserved for chSSPI
 
@@ -8352,7 +8420,19 @@ namespace Microsoft.Data.SqlClient
                         _physicalStateObj.WriteByteArray(encryptedChangePassword, encryptedChangePasswordLengthInBytes, 0);
                     }
                 }
+                if (rec.MARS.Length > 0)
+                {
+                    WriteString(rec.MARS, _physicalStateObj);
+                }
+                if(rec.ThreadID.Length > 0)
+                {
+                    WriteString(rec.ThreadID, _physicalStateObj);
+                }
 
+                if(rec.TraceID.Length > 0)
+                {
+                    WriteString(rec.TraceID, _physicalStateObj);
+                }
                 if (useFeatureExt)
                 {
                     if ((requestedFeatures & TdsEnums.FeatureExtension.SessionRecovery) != 0)

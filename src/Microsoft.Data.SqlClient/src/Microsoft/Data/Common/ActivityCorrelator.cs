@@ -25,6 +25,11 @@ namespace Microsoft.Data.Common
                 this.Sequence = sequence;
             }
 
+            public string makeString()
+            {
+                return System.Text.Encoding.Unicode.GetString(this.Id.ToByteArray()) + this.Sequence.ToString();
+            }
+
             public override string ToString()
             {
                 return string.Format(CultureInfo.InvariantCulture, "{0}:{1}", this.Id, this.Sequence);

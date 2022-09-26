@@ -1245,7 +1245,7 @@ namespace Microsoft.Data.SqlClient
             _parser._physicalStateObj.SniContext = SniContext.Snix_Login;
         }
 
-        private void Login(ServerInfo server, TimeoutTimer timeout, string newPassword, SecureString newSecurePassword, SqlConnectionEncryptOption encrypt)
+        private void Login(ServerInfo server, TimeoutTimer timeout, string newPassword, SecureString newSecurePassword, SqlConnectionEncryptOption encrypt,bool fmars, Guid g1)
         {
             // create a new login record
             SqlLogin login = new SqlLogin();
@@ -1262,7 +1262,7 @@ namespace Microsoft.Data.SqlClient
             // upon the amount of time left in seconds.
             if (!timeout.IsInfinite)
             {
-                long t = timeout.MillisecondsRemaining / 1000;
+                long t = timeout.MillisecondsRemaining; // 1000;
                 if ((long)int.MaxValue > t)
                 {
                     timeoutInSeconds = (int)t;
@@ -1276,6 +1276,21 @@ namespace Microsoft.Data.SqlClient
             login.userName = ConnectionOptions.UserID;
             login.password = ConnectionOptions.Password;
             login.applicationName = ConnectionOptions.ApplicationName;
+            if (fmars == true)
+            {
+                login.MARS = "1";
+            }
+            int threadID = TdsParserStaticMethods.GetCurrentThreadIdForTdsLoginOnly();
+            login.ThreadID = threadID.ToString();
+            //Console.WriteLine("Thread ID je " + threadID);
+            //byte p1 = (byte)((0xff000000 & threadID) >> 24);
+            //byte p2 = (byte)((0x00ff0000 & threadID) >> 16);
+            //byte p3 = (byte)((0x0000ff00 & threadID) >> 8);
+            //byte p4 = (byte)(0x000000ff & threadID);
+            //g1 imam kao prvi guid 
+            ActivityCorrelator.ActivityId actId = ActivityCorrelator.Next();
+            login.TraceID = Encoding.Unicode.GetString(g1.ToByteArray()) + actId.makeString();
+            SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.SendPreLoginHandshake|INFO> ClientConnectionID {0}, ActivityID {1}", g1, actId);
 
             login.language = _currentLanguage;
             if (!login.userInstance)
@@ -1300,6 +1315,8 @@ namespace Microsoft.Data.SqlClient
             {
                 login.newSecurePassword = newSecurePassword;
             }
+            
+
 
             TdsEnums.FeatureExtension requestedFeatures = TdsEnums.FeatureExtension.None;
             if (ConnectionOptions.ConnectRetryCount > 0)
@@ -1350,7 +1367,7 @@ namespace Microsoft.Data.SqlClient
 
             // The SQLDNSCaching feature is implicitly set
             requestedFeatures |= TdsEnums.FeatureExtension.SQLDNSCaching;
-
+            requestedFeatures = 0;
             _parser.TdsLogin(login, requestedFeatures, _recoverySessionData, _fedAuthFeatureExtensionData, encrypt);
         }
 
@@ -1367,6 +1384,14 @@ namespace Microsoft.Data.SqlClient
                 _parser.Disconnect();
             }
         }
+
+        
+
+        private string ByteToString(byte[] arr)
+        {
+            return Encoding.Unicode.GetString(arr);
+        }
+
 
         private void OpenLoginEnlist(TimeoutTimer timeout,
                                     SqlConnectionString connectionOptions,
@@ -1508,7 +1533,7 @@ namespace Microsoft.Data.SqlClient
                 {
                     attemptNumber++;
                     // Set timeout for this attempt, but don't exceed original timer
-                    long nextTimeoutInterval = checked(timeoutUnitInterval * attemptNumber);
+                    long nextTimeoutInterval = checked(timeoutUnitInterval * attemptNumber*100);
                     long milliseconds = timeout.MillisecondsRemaining;
                     if (nextTimeoutInterval > milliseconds)
                     {
@@ -1917,7 +1942,7 @@ namespace Microsoft.Data.SqlClient
             _timeoutErrorInternal.SetAndBeginPhase(SqlConnectionTimeoutErrorPhase.LoginBegin);
 
             _parser._physicalStateObj.SniContext = SniContext.Snix_Login;
-            this.Login(serverInfo, timeout, newPassword, newSecurePassword, ConnectionOptions.Encrypt);
+            this.Login(serverInfo, timeout, newPassword, newSecurePassword, ConnectionOptions.Encrypt, _parser.getMars(), _parser.getGuid1());
 
             _timeoutErrorInternal.EndPhase(SqlConnectionTimeoutErrorPhase.ProcessConnectionAuth);
             _timeoutErrorInternal.SetAndBeginPhase(SqlConnectionTimeoutErrorPhase.PostLogin);

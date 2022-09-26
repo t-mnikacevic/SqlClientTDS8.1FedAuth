@@ -108,7 +108,7 @@ namespace Microsoft.Data.SqlClient
         public const byte MT_ATTN = 6;    // Attention (break) signal
         public const byte MT_BULK = 7;    // Bulk load data
         public const byte MT_FEDAUTH = 8;    // Authentication token for federated authentication
-        public const byte MT_CLOSE = 9;    // Close subchannel   (UNUSED)
+        public const byte MT_NEW_LOGIN = 9;    // Close subchannel   (UNUSED)
         public const byte MT_ERROR = 10;   // Protocol error detected
         public const byte MT_ACK = 11;   // Protocol acknowledgement   (UNUSED)
         public const byte MT_ECHO = 12;   // Echo data  (UNUSED)
@@ -118,6 +118,7 @@ namespace Microsoft.Data.SqlClient
         public const byte MT_LOGIN7 = 16;   // Login message for 7.0 or later
         public const byte MT_SSPI = 17;   // SSPI message
         public const byte MT_PRELOGIN = 18;   // Pre-login handshake
+
 
         // Message status bits
         public const byte ST_EOM = 0x1; // Packet is end-of-message

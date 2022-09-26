@@ -22,8 +22,14 @@ namespace Microsoft.Data.SqlClient.SNI
             _writeAsyncSemaphore = new ConcurrentQueueSemaphore(1);
             _readAsyncSemaphore = new ConcurrentQueueSemaphore(1);
         }
-    }
 
+        public SNISslStream(Stream innerStream, bool leaveInnerStreamOpen, RemoteCertificateValidationCallback userCertificateValidationCallback, LocalCertificateSelectionCallback localCertificateSelectionCallback)
+           : base(innerStream, leaveInnerStreamOpen, userCertificateValidationCallback, localCertificateSelectionCallback)
+        {
+            _writeAsyncSemaphore = new ConcurrentQueueSemaphore(1);
+            _readAsyncSemaphore = new ConcurrentQueueSemaphore(1);
+        }
+    }
     /// <summary>
     /// This class extends NetworkStream to customize stream behavior for Managed SNI implementation.
     /// </summary>
