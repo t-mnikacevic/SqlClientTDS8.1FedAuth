@@ -8,7 +8,7 @@ namespace TDSSDemoApp
     {
         public static double ctr = 0;
         public static bool flag = true;
-        public static double proseci = 0;
+        public static double avg = 0;
         public static int numQuerries;
 
         public static double Add(ref double location1, double value)
@@ -30,9 +30,9 @@ namespace TDSSDemoApp
 
         public static void execQuerry(object con)
         {
-            double broj = 0;
-            double ukupnoVreme = 0;
-            double brojUpita = 0;
+            double successQuerryCtr = 0;
+            double overallTime = 0;
+            double successOpenCtr = 0;
 
             while (flag)
             {
@@ -46,13 +46,14 @@ namespace TDSSDemoApp
                         stopwatch.Start();
                         conn.Open();
                         stopwatch.Stop();
-                        ukupnoVreme += stopwatch.ElapsedMilliseconds;
-                        brojUpita++;
-                        
+                        overallTime += stopwatch.ElapsedMilliseconds;
+                        successOpenCtr++;
+
                         for (int i = 1; i <= numQuerries; i++)
                         {
                             var cmd = conn.CreateCommand();
                             cmd.CommandText = "select random_col from testTable where Id=" + a.Next(1, 140000).ToString();
+
                             using (var rdr = cmd.ExecuteReader())
                             {
                                 while (rdr.Read())
@@ -60,11 +61,12 @@ namespace TDSSDemoApp
 
                                 }
                             }
+                            cmd.Dispose();
                         }
 
                         conn.Close();
                         //conn.Dispose();
-                        broj++;
+                        successQuerryCtr++;
                     }
                 }
                 catch (Exception xcp)
@@ -73,45 +75,45 @@ namespace TDSSDemoApp
                 }
                 // Interlocked.Increment(ref ctr);
             }
-            //Console.WriteLine(ukupnoVreme / brojUpita);
-            Add(ref proseci, ukupnoVreme / brojUpita);
-            Add(ref ctr, broj);
+            //Console.WriteLine(overallTime / successOpenCtr);
+            Add(ref avg, overallTime / successOpenCtr);
+            Add(ref ctr, successQuerryCtr);
 
 
         }
 
         static void Main(string[] args)
         {
-            proseci = 0;
+            avg = 0;
             int time;
             time = Int32.Parse(args[1]);
             string server = args[0];
-            int brojNiti = Int32.Parse(args[2]);
+            int numOfThreads = Int32.Parse(args[2]);
             string pooling = args[3];
             numQuerries = Int32.Parse(args[4]);
             int numPooling = Int32.Parse(args[5]);
             //var connectionString = "Server=testcl.vnetOnebox.markonikolic-95.onebox.xdb.mscds.com,1433;Database=master;TrustServerCertificate=True;User Id=sa;Password=Yukon900!Katmai100";
-            //var connectionString = "Server=" + server + ",1433;Database=master;Encrypt=true;User Id=sa;Password=Yukon900Katmai100;Authentication=Sql Password;Pooling=" + pooling;
-            var connectionString = "Server="+server+",1433;Database=master;Encrypt=strict;User Id=sa;Password=Yukon900Katmai100;Authentication=Sql Password;Pooling="+pooling + ";max pool size=" + numPooling;
-            Thread[] tredovi = new Thread[brojNiti];
+            var connectionString = "Server=" + server + ",1433;Database=master;Encrypt=strict;User Id=sa;Password=Yukon900Katmai100;Authentication=Sql Password;Pooling=" + pooling + ";max pool size=" + numPooling;
+            //var connectionString = "Server=MDCSSQL-FILCUB1.europe.corp.microsoft.com,1433;Database=master;MultipleActiveResultSets=True;Encrypt=strict;User Id=sa;Password=Yukon900Katmai100;Authentication=Sql Password;Pooling=false";
+            Thread[] threads = new Thread[numOfThreads];
             //MDCSSQL-FILCUB1.europe.corp.microsoft.com,1433
             //Thread t = new Thread(new ParameterizedThreadStart(execQuerry));
             //t.Start(connectionString);
             //t.Join(); 
 
-            for (int i = 0; i < brojNiti; i++)
+            for (int i = 0; i < numOfThreads; i++)
             {
-                tredovi[i] = new Thread(new ParameterizedThreadStart(execQuerry));
-                tredovi[i].Start(connectionString);
+                threads[i] = new Thread(new ParameterizedThreadStart(execQuerry));
+                threads[i].Start(connectionString);
             }
             Thread.Sleep(time * 60000);
             flag = false;
             //Console.WriteLine(ctr);
-            for (int i = 0; i < brojNiti; i++)
+            for (int i = 0; i < numOfThreads; i++)
             {
-                tredovi[i].Join();
+                threads[i].Join();
             }
-            Console.WriteLine(proseci / (double)brojNiti + "ms");
+            Console.WriteLine(avg / (double)numOfThreads + "ms");
             Console.WriteLine(ctr);
 
         }
