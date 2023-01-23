@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "TDSSDemoApp": {
+      "commandName": "Project",
+      "nativeDebugging": true
+    }
+  }
+}

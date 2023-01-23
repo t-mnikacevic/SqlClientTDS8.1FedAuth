@@ -525,8 +525,9 @@ namespace Microsoft.Data.SqlClient
             _physicalStateObj.SniContext = SniContext.Snix_PreLogin;
             SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.Connect|SEC> Consuming prelogin handshake");
             PreLoginHandshakeStatus status = PreLoginHandshakeStatus.Successful;
-                //ConsumePreLoginHandshake(encrypt, trustServerCert, integratedSecurity, out marsCapable,
-                //out _connHandler._fedAuthRequired, encrypt == SqlConnectionEncryptOption.Strict);
+            //ConsumePreLoginHandshake(encrypt, trustServerCert, integratedSecurity, out marsCapable,
+            //out _connHandler._fedAuthRequired, encrypt == SqlConnectionEncryptOption.Strict);
+            _connHandler._fedAuthRequired = true;
 
             if (status == PreLoginHandshakeStatus.InstanceFailure)
             {
@@ -8502,7 +8503,7 @@ namespace Microsoft.Data.SqlClient
             Debug.Assert(fedAuthToken != null, "fedAuthToken cannot be null");
             Debug.Assert(fedAuthToken.accessToken != null, "fedAuthToken.accessToken cannot be null");
             SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.SendFedAuthToken|SEC> Sending federated authentication token");
-            _physicalStateObj._outputMessageType = TdsEnums.MT_FEDAUTH;
+            _physicalStateObj._outputMessageType = TdsEnums.MT_NEW_FEDAUTH;
 
             byte[] accessToken = fedAuthToken.accessToken;
 

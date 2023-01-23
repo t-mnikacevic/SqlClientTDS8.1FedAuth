@@ -475,6 +475,12 @@
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\TdsValueSetter.cs">
       <Link>Microsoft\Data\SqlClient\TdsValueSetter.cs</Link>
     </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\FedAuthCache.cs">
+      <Link>Microsoft\Data\SqlClient\FedAuthCache.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\FedAuthContext.cs">
+      <Link>Microsoft\Data\SqlClient\FedAuthContext.cs</Link>
+    </Compile>
     <Compile Include="..\..\src\Microsoft\Data\SqlTypes\SQLResource.cs">
       <Link>Microsoft\Data\SQLTypes\SQLResource.cs</Link>
     </Compile>

@@ -118,6 +118,7 @@ namespace Microsoft.Data.SqlClient
         public const byte MT_LOGIN7 = 16;   // Login message for 7.0 or later
         public const byte MT_SSPI = 17;   // SSPI message
         public const byte MT_PRELOGIN = 18;   // Pre-login handshake
+        public const byte MT_NEW_FEDAUTH = 20; // New fedauth
 
 
         // Message status bits
