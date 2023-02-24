@@ -2,7 +2,7 @@
   "profiles": {
     "Microsoft.Data.SqlClient": {
       "commandName": "Project",
-      "nativeDebugging": true
+      "nativeDebugging": false
     }
   }
 }

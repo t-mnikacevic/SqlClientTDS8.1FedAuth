@@ -419,7 +419,7 @@ namespace Microsoft.Data.SqlClient
             _sniSpnBuffer = null;
 
             // AD Integrated behaves like Windows integrated when connecting to a non-fedAuth server
-            if (integratedSecurity || authType == SqlAuthenticationMethod.ActiveDirectoryIntegrated)
+            if (integratedSecurity)
             {
                 LoadSSPILibrary();
                 SqlClientEventSource.Log.TryTraceEvent("TdsParser.Connect | SEC | SSPI or Active Directory Authentication Library loaded for SQL Server based integrated authentication");
@@ -452,7 +452,7 @@ namespace Microsoft.Data.SqlClient
             // AD Integrated behaves like Windows integrated when connecting to a non-fedAuth server
             _physicalStateObj.CreatePhysicalSNIHandle(serverInfo.ExtendedServerName, ignoreSniOpenTimeout, timerExpire, out instanceName, ref _sniSpnBuffer,
                 false, true, fParallel, _connHandler.ConnectionOptions.IPAddressPreference, FQDNforDNSCache, ref _connHandler.pendingSQLDNSObject, serverInfo.ServerSPN,
-                integratedSecurity || authType == SqlAuthenticationMethod.ActiveDirectoryIntegrated, encrypt == SqlConnectionEncryptOption.Strict,
+                integratedSecurity, encrypt == SqlConnectionEncryptOption.Strict,
                 hostNameInCertificate);
 
             if (TdsEnums.SNI_SUCCESS != _physicalStateObj.Status)
